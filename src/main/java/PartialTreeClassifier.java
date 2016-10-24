@@ -43,9 +43,20 @@ public class PartialTreeClassifier {
         ClassificationPipeline pipeline = new ClassificationPipeline();
         PTKernelFactory kernelFactory = new PTKernelFactory();
         List<MulticlassClassificationEvaluator> evaluators =
-                pipeline.kFoldEvaluate(trainDataset, kernelFactory, 5, 0.8f);
+                pipeline.kFoldEvaluate(trainDataset, kernelFactory, 2, 0.8f);
+        float meanF1 = 0;
         for (MulticlassClassificationEvaluator evaluator : evaluators) {
-            logger.info(evaluator.toString());
+            logger.info("Iteration:");
+            logger.info("Mean Accuracy: " + evaluator.getAccuracy());
+            for (Label label : dataset.getClassificationLabels()) {
+                logger.info("Class " + label.toString());
+                evaluator.printCounters(label);
+            }
+            meanF1 += evaluator.getMeanF1();
+            // Evaluator must be computed before calling this.
+            logger.info("\n" + evaluator.toString());
         }
+        logger.info("Mean F1 over " + evaluators.size() + " iterations: "
+            + meanF1 / evaluators.size());
     }
 }

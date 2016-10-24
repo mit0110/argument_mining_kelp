@@ -27,7 +27,7 @@ public class ClassificationPipeline {
     public OneVsAllLearning fit(SimpleDataset dataset, Kernel kernel) {
         List<Label> classes = dataset.getClassificationLabels();
 
-        KernelCache cache = new FixIndexKernelCache(5000);
+        KernelCache cache = new FixIndexKernelCache(10000);
         kernel.setKernelCache(cache);
         BinaryCSvmClassification svmSolver = new BinaryCSvmClassification();
         svmSolver.setKernel(kernel);
@@ -62,8 +62,8 @@ public class ClassificationPipeline {
         List<MulticlassClassificationEvaluator> evaluators =
                 new ArrayList<MulticlassClassificationEvaluator>();
         for (int iteration = 0; iteration < kFolds; iteration++) {
-            SimpleDataset[] split = dataset.splitClassDistributionInvariant(
-                    trainSize);
+            SimpleDataset[] split = dataset.getShuffledDataset()
+                    .splitClassDistributionInvariant(trainSize);
             SimpleDataset trainDataset = split[0];
             SimpleDataset testDataset = split[1];
             logger.info("Total size: " + dataset.getNumberOfExamples());
@@ -73,9 +73,9 @@ public class ClassificationPipeline {
             // Train new classifier
             fit(trainDataset, kernelFactory.getKernel());
             // Get evaluations
-            predict(testDataset);
+            MulticlassClassificationEvaluator newEvaluator = predict(testDataset);
             // Get scores
-            evaluators.add(evaluator);
+            evaluators.add(newEvaluator);
         }
         return evaluators;
     }
