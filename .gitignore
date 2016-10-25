@@ -1,4 +1,11 @@
+# Intellij files
 .idea
 log/
 out/
 target/
+/bin/
+
+# Eclipse files
+.classpath
+.project
+.settings/

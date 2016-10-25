@@ -24,31 +24,34 @@ public class PartialTreeClassifier {
         logger.info("Total size: " + dataset.getNumberOfExamples());
         List<Label> classes = dataset.getClassificationLabels();
         for (Label label : classes) {
-            logger.info("Class " + label.toString() + ": "
-                    + dataset.getNumberOfPositiveExamples(label));
+            logger.info("Class " + label.toString() + ": " + dataset.getNumberOfPositiveExamples(label));
         }
     }
 
     public static void main(String[] args) throws Exception {
         Logger logger = LogManager.getRootLogger();
+        if (args.length != 2) {
+            System.out.println("Error! Usage:");
+            System.out.println("pathToInputFile numberOfKFolds");
+            return;
+        }
         String trainFilePath = args[0];
-        SimpleDataset dataset = new SimpleDataset();
-        dataset.populate(trainFilePath);
-        SimpleDataset trainDataset = dataset.splitClassDistributionInvariant(
-                0.2f)[0];
+        Integer kFolds = new Integer(args[1]);
+        SimpleDataset trainDataset = new SimpleDataset();
+        trainDataset.populate(trainFilePath);
 
         logger.info("Dataset populated.");
         exploreDataset(trainDataset, logger);
 
         ClassificationPipeline pipeline = new ClassificationPipeline();
         PTKernelFactory kernelFactory = new PTKernelFactory();
-        List<MulticlassClassificationEvaluator> evaluators =
-                pipeline.kFoldEvaluate(trainDataset, kernelFactory, 2, 0.8f);
+        List<MulticlassClassificationEvaluator> evaluators = pipeline.kFoldEvaluate(trainDataset, kernelFactory, kFolds,
+                0.8f);
         float meanF1 = 0;
         for (MulticlassClassificationEvaluator evaluator : evaluators) {
             logger.info("Iteration:");
             logger.info("Mean Accuracy: " + evaluator.getAccuracy());
-            for (Label label : dataset.getClassificationLabels()) {
+            for (Label label : trainDataset.getClassificationLabels()) {
                 logger.info("Class " + label.toString());
                 evaluator.printCounters(label);
             }
@@ -56,7 +59,6 @@ public class PartialTreeClassifier {
             // Evaluator must be computed before calling this.
             logger.info("\n" + evaluator.toString());
         }
-        logger.info("Mean F1 over " + evaluators.size() + " iterations: "
-            + meanF1 / evaluators.size());
+        logger.info("Mean F1 over " + evaluators.size() + " iterations: " + meanF1 / evaluators.size());
     }
 }
